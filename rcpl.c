@@ -42,7 +42,7 @@ sockbuf= sizeof(socks);
         printf("NOTICE: Someone has connected\n");
       }
       int flags = MSG_WAITALL;
-      size_t receiveres = recv(incomingsocks, buffer, strlen(buffer), flags);
+      ssize_t receiveres = recv(incomingsocks, buffer, sizeof(buffer), flags);
       if (receiveres < 0) {
         printf("NOTICE: No data sent from connected person\n");
       }
