@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/socket.h>
+#include <netdb.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
@@ -20,6 +22,7 @@ time(&thyme);
    printf("the shutdown code is: %s\n", man);
    fprintf(log, "the shutdown code is: %s\n", man);
   char buffer[100];
+  char ipaddr[100];
   char input[10];
   int port = atoi(argv[1]);
   int incomingsocks;
@@ -31,6 +34,7 @@ time(&thyme);
     return -1;
   }
 struct sockaddr_in socks;
+struct sockaddr_in otherside;
 socks.sin_family = AF_INET; // IPv4 address family
 socks.sin_port = htons(port); // port number
 socks.sin_addr.s_addr = inet_addr("127.0.0.1"); // IPv4 address
@@ -50,8 +54,8 @@ if (bind(sockfd, addr, sizeof(socks)) < 0) {
       printf("NOTICE: listening to port %d\n", ntohs(socks.sin_port));
       fprintf(log, "NOTICE: listening to port %d\n", ntohs(socks.sin_port));
     }
-    socklen_t sockbuf;
-sockbuf= sizeof(socks);
+    socklen_t sockbuf = sizeof(socks);
+    socklen_t otherbuf = sizeof(otherside);
     while (1) {
       incomingsocks = accept(sockfd, addr, &sockbuf);
       if (incomingsocks < 0) {
@@ -59,8 +63,13 @@ sockbuf= sizeof(socks);
         fprintf(log, "FATAL: Won't accept connections\n");
         return -1;
       } else {
-        printf("NOTICE: Someone has connected\n");
-        fprintf(log, "NOTICE: Someone has connected\n");
+    	   int bazingus = getpeername(incomingsocks, (struct sockaddr *)&otherside, &otherbuf);
+    	   if (bazingus < 0) {
+    		   printf("Couldn't get the IP from the connected person\n");
+    	   } else {
+    	        printf("NOTICE: %s has connected\n", inet_ntoa(otherside.sin_addr));
+    	        fprintf(log, "NOTICE: %s has connected\n", inet_ntoa(otherside.sin_addr));
+    	   }
       }
       int flags = MSG_WAITALL;
       ssize_t receiveres = recv(incomingsocks, buffer, sizeof(buffer), flags);
